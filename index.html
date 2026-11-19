@@ -24,4 +24,40 @@ const mental='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1500"><d
 const set=()=>{const t=document.querySelector("#app").dataset.theme;const svg=t==="mentalist"?mental:t==="haikyuu"?haikyu:null;document.querySelector("#app").style.setProperty("--wallpaper",svg?'url("data:image/svg+xml,'+encodeURIComponent(svg)+'")':"none")};
 new MutationObserver(set).observe(document.querySelector("#app"),{attributes:true,attributeFilter:["data-theme"]});set();
 })();
+</script><script>
+/* Lavar los platos: lunes y miércoles obligatoria; otros días especial automática */
+(function(){
+const originalRender=render;
+const weekday=()=>new Date().getDay();
+const mandatory=()=>[1,3].includes(weekday());
+const taskIndex=2;
+const dayKey=()=>new Date().toLocaleDateString("sv-SE");
+const completedToday=()=>{try{return JSON.parse(localStorage.getItem("mile-dishes-days")||"{}")}catch{return {}}};
+const writeDay=()=>{const s=completedToday();s[dayKey()]=true;localStorage.setItem("mile-dishes-days",JSON.stringify(s))};
+function refresh(){
+ originalRender();
+ const row=document.querySelector('[data-done="2"]')?.closest(".line");
+ const isMandatory=mandatory();
+ if(!isMandatory){
+  if(row)row.remove();
+  const p=document.querySelector("#specialList");
+  if(p){
+   const done=!!completedToday()[dayKey()];
+   p.insertAdjacentHTML("afterbegin",'<div class="line"><div><div class="name">Lavar los platos 🍽️</div><div class="pts">160 puntos · Especial de hoy</div></div><button class="btn" data-dish-special '+(done?'disabled':'')+'>'+(done?'En revisión':'¡Hecho!')+'</button></div>');
+  }
+ }
+ const counter=document.querySelector("#count");
+ const bar=document.querySelector("#progress");
+ const doneDaily=state.done.filter(i=>isMandatory||i!==taskIndex).length;
+ const total=isMandatory?6:5;
+ if(counter)counter.textContent=doneDaily+"/"+total;
+ if(bar)bar.style.width=doneDaily/total*100+"%";
+}
+render=refresh;
+document.addEventListener("click",e=>{
+ const b=e.target.closest("[data-dish-special]");
+ if(b&&!completedToday()[dayKey()]){writeDay();refresh()}
+},true);
+refresh();
+})();
 </script></body></html>
