@@ -60,4 +60,39 @@ document.addEventListener("click",e=>{
 },true);
 refresh();
 })();
+</script><script>
+/* Cocina: obligatoria lunes y miércoles; especial opcional los otros cinco días. */
+(function(){
+const previousRender=render;
+const isRequired=()=>[1,3].includes(new Date().getDay());
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const records=()=>{try{return JSON.parse(localStorage.getItem("mile-kitchen-days")||"{}")}catch{return {}}};
+const kitchenStatus=()=>records()[today()]||"new";
+function kitchenRender(){
+ previousRender();
+ // The kitchen remains at its original catalog index (s0) to preserve all other saved task IDs.
+ document.querySelector('[data-opt="s0"]')?.closest(".line")?.remove();
+ const mandatory=isRequired(),status=kitchenStatus(),container=document.querySelector(mandatory?"#dailyList":"#specialList");
+ if(container){
+ const label=mandatory?(status==="review"?"En revisión":"¡Hecho!"):(status==="new"?"Aceptar":status==="accepted"?"¡Hecho!":"En revisión");
+ const row='<div class="line"><div><div class="name">Limpiar y ordenar la cocina</div><div class="pts">100 puntos · '+(mandatory?"Obligatoria hoy":"Especial opcional")+'</div></div><button class="btn" data-kitchen '+(status==="review"?"disabled":"")+'>'+label+'</button></div>';
+ container.insertAdjacentHTML(mandatory?"beforeend":"afterbegin",row);
+ }
+ if(mandatory){
+ const counter=document.querySelector("#count"),bar=document.querySelector("#progress");
+ const matches=counter?.textContent.match(/^(\d+)\/(\d+)$/);
+ if(matches){const done=Number(matches[1])+(status==="review"?1:0),total=Number(matches[2])+1;counter.textContent=done+"/"+total;if(bar)bar.style.width=(100*done/total)+"%"}
+ }
+}
+render=kitchenRender;
+document.addEventListener("click",e=>{
+ const button=e.target.closest("[data-kitchen]");
+ if(!button)return;
+ const status=kitchenStatus(),required=isRequired();
+ if(status==="review")return;
+ const next=required?"review":status==="new"?"accepted":"review";
+ const data=records();data[today()]=next;localStorage.setItem("mile-kitchen-days",JSON.stringify(data));kitchenRender();
+},true);
+kitchenRender();
+})();
 </script></body></html>
