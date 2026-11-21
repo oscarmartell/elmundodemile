@@ -76,22 +76,18 @@ function updateStatus(task,next){
  localStorage.setItem(key,JSON.stringify(d));
 }
 function scheduledRender(){
- previousRender();
- tasks.forEach(t=>{
-  const attr=t.origin==="daily"?"data-done":t.origin==="special"?"data-opt":"data-opt";
-  const id=t.origin==="daily"?String(t.index):(t.origin==="special"?"s":"u")+t.index;
-  document.querySelectorAll('['+attr+'="'+id+'"]').forEach(button=>button.closest(".line")?.remove());
- });
- for(const t of tasks){
-  const mandatory=t.mode==="daily"||(t.mode==="special"&&t.days.includes(weekday()));
-  const section=mandatory?"#dailyList":t.mode==="super"?"#superList":"#specialList";
+ const groups={daily:[],special:[],super:[]};
+ for(let i=0;i<tasks.length;i++){
+  const t=tasks[i],mandatory=t.mode==="daily"||(t.mode==="special"&&t.days.includes(weekday()));
+  const group=mandatory?"daily":t.mode==="super"?"super":"special";
   const status=statusFor(t);
   const label=status==="review"?"En revisión":mandatory?"¡Hecho!":status==="accepted"?"¡Hecho!":"Aceptar";
-  const button='<button class="btn" data-scheduled="'+tasks.indexOf(t)+'" '+(status==="review"?"disabled":"")+'>'+label+'</button>';
-  const detail=(t.name==="Cocinar un tiempo de comida"?"Puntos por definir":t.points+' puntos')+(t.mode==="special"?' · '+(mandatory?"Obligatoria hoy":"Opcional hoy"):'');
-  const row='<div class="line"><div><div class="name">'+t.name+'</div><div class="pts">'+detail+'</div></div>'+button+'</div>';
-  document.querySelector(section).insertAdjacentHTML("beforeend",row);
+  const detail=(t.name==="Cocinar un tiempo de comida"?"Puntos por definir":t.points+" puntos")+(t.mode==="special"?(mandatory?" · Obligatoria hoy":" · Opcional hoy"):"");
+  groups[group].push('<div class="line"><div><div class="name">'+t.name+'</div><div class="pts">'+detail+'</div></div><button class="btn" data-scheduled="'+i+'" '+(status==="review"?"disabled":"")+'>'+label+'</button></div>');
  }
+ document.querySelector("#dailyList").innerHTML=groups.daily.join("");
+ document.querySelector("#specialList").innerHTML=groups.special.join("");
+ document.querySelector("#superList").innerHTML=groups.super.join("");
  const dailyTasks=tasks.filter(t=>t.mode==="daily"||(t.mode==="special"&&t.days.includes(weekday())));
  const done=dailyTasks.filter(t=>statusFor(t)==="review").length;
  document.querySelector("#count").textContent=done+"/"+dailyTasks.length;
