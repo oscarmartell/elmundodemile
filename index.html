@@ -104,4 +104,57 @@ document.addEventListener("click",e=>{
 });
 scheduledRender();
 })();
+</script>
+<script>
+/* Recuperación independiente del listado si alguna rutina anterior falla. */
+(function(){
+"use strict";
+const tasks=[{"name":"Hacer la cama","points":80,"origin":"daily","index":0,"mode":"daily","days":[]},{"name":"Mantener su habitación ordenada","points":160,"origin":"daily","index":1,"mode":"daily","days":[]},{"name":"Limpiar y ordenar la cocina","points":100,"origin":"special","index":0,"mode":"special","days":[2,4]},{"name":"Aprobar un examen importante","points":1000,"origin":"super","index":0,"mode":"super","days":[]},{"name":"Guardar la ropa limpia","points":100,"origin":"special","index":1,"mode":"special","days":[2,4]},{"name":"Limpiar el baño completo","points":600,"origin":"super","index":1,"mode":"super","days":[]},{"name":"Lavar los platos","points":160,"origin":"daily","index":2,"mode":"special","days":[1,3,5]},{"name":"Preparar mochila y materiales","points":80,"origin":"daily","index":3,"mode":"daily","days":[]},{"name":"Llevar la ropa sucia al canasto","points":40,"origin":"daily","index":4,"mode":"daily","days":[]},{"name":"Poner y levantar la mesa","points":120,"origin":"daily","index":5,"mode":"daily","days":[]},{"name":"Limpiar y barrer su habitación","points":150,"origin":"special","index":2,"mode":"special","days":[3,6]},{"name":"Cambiar las sábanas","points":150,"origin":"special","index":3,"mode":"special","days":[6]},{"name":"Ordenar escritorio, placard y cajones","points":200,"origin":"special","index":4,"mode":"special","days":[6]},{"name":"Barrer espacios comunes","points":150,"origin":"special","index":5,"mode":"super","days":[]},{"name":"Pasar el trapo o limpiar pisos","points":200,"origin":"special","index":6,"mode":"super","days":[]},{"name":"Sacar la basura","points":50,"origin":"special","index":7,"mode":"special","days":[1,3,5]},{"name":"Ordenar espacios comunes","points":50,"origin":"special","index":8,"mode":"super","days":[]},{"name":"Limpiar vidrios, ventanas y espejos","points":150,"origin":"special","index":9,"mode":"super","days":[]},{"name":"Limpiar y organizar la heladera","points":200,"origin":"special","index":10,"mode":"super","days":[]},{"name":"Limpiar horno o microondas","points":200,"origin":"special","index":11,"mode":"super","days":[]},{"name":"Guardar y organizar las compras","points":200,"origin":"special","index":12,"mode":"super","days":[]},{"name":"Pasar la aspiradora","points":100,"origin":"special","index":39,"mode":"super","days":[]},{"name":"Barrer","points":100,"origin":"special","index":40,"mode":"special","days":[2,4]},{"name":"Ordenar y limpiar un ambiente completo de la casa","points":800,"origin":"super","index":2,"mode":"super","days":[]},{"name":"Realizar una limpieza profunda de su habitación","points":700,"origin":"super","index":3,"mode":"super","days":[]},{"name":"Preparar una merienda especial para sus hermanos","points":600,"origin":"super","index":4,"mode":"super","days":[]},{"name":"Cocinar un tiempo de comida","points":0,"origin":"super","index":7,"mode":"super","days":[]},{"name":"Compartir tiempo de juego con Ramiro","points":150,"origin":"special","index":13,"mode":"super","days":[]},{"name":"Ayudar a Ramiro con actividades o tareas","points":150,"origin":"special","index":14,"mode":"super","days":[]},{"name":"Acompañar a Ramiro un rato acordado","points":150,"origin":"special","index":15,"mode":"super","days":[]},{"name":"Jugar con Ramiro","points":150,"origin":"special","index":16,"mode":"super","days":[]},{"name":"Leerle cuentos a Ramiro","points":150,"origin":"special","index":17,"mode":"super","days":[]},{"name":"Realizar actividades de aprendizaje con Ramiro","points":150,"origin":"special","index":18,"mode":"super","days":[]},{"name":"Compartir una actividad con Juana","points":200,"origin":"special","index":19,"mode":"super","days":[]},{"name":"Jugar con Juana","points":200,"origin":"special","index":20,"mode":"super","days":[]},{"name":"Ayudar a Juana con sus actividades","points":200,"origin":"special","index":21,"mode":"super","days":[]},{"name":"Compartir una actividad creativa con Juana","points":200,"origin":"special","index":22,"mode":"super","days":[]},{"name":"Pasar tiempo de calidad con Juana","points":200,"origin":"special","index":23,"mode":"super","days":[]},{"name":"Leer, jugar o realizar actividades con sus hermanos","points":300,"origin":"special","index":24,"mode":"super","days":[]},{"name":"Cuidar a sus hermanos un período acordado","points":500,"origin":"special","index":25,"mode":"super","days":[]},{"name":"Prepararles una merienda","points":150,"origin":"special","index":26,"mode":"super","days":[]},{"name":"Organizar una tarde de juegos con sus hermanos","points":400,"origin":"special","index":27,"mode":"super","days":[]},{"name":"Organizar una actividad creativa para Juana","points":300,"origin":"special","index":28,"mode":"super","days":[]},{"name":"Acompañar a sus hermanos en una actividad acordada","points":300,"origin":"special","index":29,"mode":"super","days":[]},{"name":"Organizar juegos para Ramiro y Juana","points":300,"origin":"special","index":30,"mode":"super","days":[]},{"name":"Compartir una actividad con los dos","points":300,"origin":"special","index":31,"mode":"super","days":[]},{"name":"Organizar una tarde de juegos con ambos","points":400,"origin":"special","index":32,"mode":"super","days":[]},{"name":"Respetar compromisos familiares","points":200,"origin":"special","index":33,"mode":"super","days":[]},{"name":"Resolver autónomamente una responsabilidad","points":300,"origin":"special","index":34,"mode":"super","days":[]},{"name":"Participar en la organización de un evento familiar","points":500,"origin":"special","index":35,"mode":"super","days":[]},{"name":"Cumplir un objetivo mensual acordado","points":500,"origin":"special","index":36,"mode":"super","days":[]},{"name":"Cuidar a sus hermanos mientras mis padres descansan","points":500,"origin":"special","index":37,"mode":"super","days":[]},{"name":"Cuidar a sus hermanos mientras mis padres no están en casa","points":500,"origin":"special","index":38,"mode":"super","days":[]},{"name":"Pasar el trapo de piso","points":100,"origin":"special","index":41,"mode":"super","days":[]},{"name":"Regar el parque","points":600,"origin":"super","index":5,"mode":"super","days":[]},{"name":"Barrer las hojas del parque","points":600,"origin":"super","index":6,"mode":"super","days":[]}];
+const day=()=>new Date().getDay();
+const dateKey=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")};
+const getState=()=>{try{return JSON.parse(localStorage.getItem("mile-scheduled-tasks-v1")||"{}")}catch{return {}}};
+const isMandatory=t=>t.mode==="daily"||(t.mode==="special"&&t.days.includes(day()));
+const record=t=>{const data=getState(),id=t.origin+":"+t.index;return t.mode==="super"?(data.super?.[id]||"new"):isMandatory(t)?(data.daily?.[dateKey()]?.[id]||"new"):(data.optional?.[dateKey()]?.[id]||"new")};
+function paint(){
+ const d=document.getElementById("dailyList");
+ const sp=document.getElementById("specialList");
+ const su=document.getElementById("superList");
+ if(!d||!sp||!su)return;
+ if(d.querySelector(".line") && sp.querySelector(".line") && su.querySelector(".line"))return;
+ const groups={daily:[],special:[],super:[]};
+ for(let i=0;i<tasks.length;i++){
+  const t=tasks[i],mandatory=isMandatory(t);
+  const target=mandatory?"daily":t.mode==="super"?"super":"special";
+  const status=record(t);
+  const label=status==="review"?"En revisión":mandatory?"¡Hecho!":status==="accepted"?"¡Hecho!":"Aceptar";
+  const note=t.name==="Cocinar un tiempo de comida"?"Puntos por definir":t.points+" puntos";
+  const extra=t.mode==="special"?(mandatory?" · Obligatoria hoy":" · Opcional hoy"):"";
+  groups[target].push('<div class="line"><div><div class="name">'+t.name+'</div><div class="pts">'+note+extra+'</div></div><button class="btn" data-recovery-task="'+i+'" '+(status==="review"?"disabled":"")+'>'+label+'</button></div>');
+ }
+ d.innerHTML=groups.daily.join("");
+ sp.innerHTML=groups.special.join("");
+ su.innerHTML=groups.super.join("");
+ const required=tasks.filter(isMandatory);
+ const done=required.filter(t=>record(t)==="review").length;
+ const count=document.getElementById("count"),progress=document.getElementById("progress");
+ if(count)count.textContent=done+"/"+required.length;
+ if(progress)progress.style.width=(required.length?100*done/required.length:0)+"%";
+}
+document.addEventListener("click",event=>{
+ const btn=event.target.closest("[data-recovery-task]");
+ if(!btn)return;
+ const t=tasks[Number(btn.dataset.recoveryTask)],status=record(t);
+ if(!t||status==="review")return;
+ const data=getState(),id=t.origin+":"+t.index,required=isMandatory(t);
+ const group=t.mode==="super"?"super":required?"daily":"optional";
+ const next=required||status==="accepted"?"review":"accepted";
+ if(group==="super"){data.super=data.super||{};data.super[id]=next}
+ else{data[group]=data[group]||{};data[group][dateKey()]=data[group][dateKey()]||{};data[group][dateKey()][id]=next}
+ localStorage.setItem("mile-scheduled-tasks-v1",JSON.stringify(data));
+ document.getElementById("dailyList").innerHTML="";
+ paint();
+});
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",paint);else paint();
+window.addEventListener("load",paint);
+})();
 </script></body></html>
