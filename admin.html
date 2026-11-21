@@ -6,7 +6,7 @@
 </style></head><body><main class="wrap">
 <header class="head"><div><div class="pill">ADMINISTRACIÓN FAMILIAR</div><h1>El mundo de Mile ✨</h1><div class="muted">Panel de padres · separado de la app de Milena</div></div><button class="btn secondary hidden" id="logout">Salir</button></header>
 <div class="alert" id="setup">🔐 <b>Configuración pendiente.</b> El panel está preparado para Firebase, pero no permite administrar información real hasta conectar el proyecto, activar Google Authentication y aplicar las reglas de Firestore. No uses esta pantalla como panel seguro todavía.</div>
-<div id="login" class="card hidden"><h2>Ingreso de padres</h2><p class="muted">Solo la cuenta parental autorizada podrá abrir el panel.</p><button class="btn" id="loginBtn">Entrar con Google</button><p id="loginMsg" class="small"></p></div>
+<div id="login" class="card hidden"><h2>Ingreso de padres</h2><p class="muted">Solo la cuenta parental autorizada podrá abrir el panel.</p><button class="btn" id="loginBtn">Entrar con Google</button><p id="loginMsg" class="small" role="status" aria-live="polite">Ingresá con una de las dos cuentas autorizadas.</p><p class="small">Si la ventana se cierra sola, este panel mostrará el código de error para diagnosticarlo.</p></div>
 <div id="private" class="hidden">
 <div class="grid"><div class="card"><div class="muted">Solicitudes pendientes</div><div class="stat" id="pendingCount">0</div></div><div class="card"><div class="muted">Puntos disponibles</div><div class="stat" id="balance">0</div></div><div class="card"><div class="muted">Tareas configuradas</div><div class="stat" id="taskCount">0</div></div></div>
 <div class="tabs"><button class="btn active" data-tab="requests">Solicitudes</button><button class="btn secondary" data-tab="tasks">Tareas</button><button class="btn secondary" data-tab="points">Puntos</button><button class="btn secondary" data-tab="settings">Ajustes</button></div>
@@ -31,7 +31,25 @@ if(!conf?.apiKey||!conf?.projectId||!Array.isArray(window.MILE_ADMIN_EMAILS)||!w
  const app=initializeApp(conf),provider=new GoogleAuthProvider();auth=getAuth(app);db=getFirestore(app);
  $("setup").classList.add("hidden");
  show("login",true);
- $("loginBtn").onclick=async()=>{try{await signInWithPopup(auth,provider)}catch(e){$("loginMsg").textContent="No se pudo ingresar: "+e.message}};
+ const loginError=e=>{
+ const code=e?.code||"sin-código";
+ const guidance={
+  "auth/unauthorized-domain":"Falta autorizar oscarmartell.github.io en Authentication → Configuración → Dominios autorizados.",
+  "auth/popup-blocked":"El navegador bloqueó la ventana de Google. Permití ventanas emergentes para este sitio.",
+  "auth/popup-closed-by-user":"La ventana de Google se cerró antes de finalizar. Probá desde Chrome, en una pestaña normal, con ventanas emergentes permitidas.",
+  "auth/cancelled-popup-request":"Se interrumpió un intento de acceso. Volvé a intentar una sola vez.",
+  "auth/operation-not-allowed":"Activá Google en Firebase Authentication → Método de acceso.",
+  "auth/network-request-failed":"Revisá la conexión a Internet y que el navegador no bloquee el servicio de Google."
+ };
+ $("loginMsg").textContent="Acceso no completado ("+code+"). "+(guidance[code]||e?.message||"Revisá la cuenta y el navegador.");
+};
+$("loginBtn").onclick=async()=>{
+ const btn=$("loginBtn");btn.disabled=true;btn.textContent="Abriendo Google…";
+ $("loginMsg").textContent="Se está verificando el acceso. No cierres la ventana emergente.";
+ try{await signInWithPopup(auth,provider);$("loginMsg").textContent="Cuenta verificada. Abriendo panel…"}
+ catch(e){loginError(e)}
+ finally{btn.disabled=false;btn.textContent="Entrar con Google"}
+};
  $("logout").onclick=()=>signOut(auth);
  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-tab]").forEach(x=>x.className="btn secondary");b.className="btn active";["requests","tasks","points","settings"].forEach(x=>show(x,x===b.dataset.tab))});
  $("taskSearch").oninput=()=>drawTasks();
@@ -78,7 +96,7 @@ if(!conf?.apiKey||!conf?.projectId||!Array.isArray(window.MILE_ADMIN_EMAILS)||!w
   unsubscribe();unsubscribe=()=>{};
   const allowed=!!user&&user.emailVerified&&(window.MILE_ADMIN_EMAILS||[]).includes(user.email?.trim().toLowerCase());
   show("login",!allowed);show("private",allowed);show("logout",allowed);
-  if(!user){$("loginMsg").textContent="";return}
+  if(!user){return}
   if(!allowed){const account=user.email||"Cuenta sin correo";await signOut(auth);$("loginMsg").textContent="No se autorizó el ingreso con "+account+". Ingresá con oemartell@gmail.com o morenoheidi@gmail.com y comprobá que el correo esté verificado.";return}
   $("adminEmail").textContent=user.email;
   try{
