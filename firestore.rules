@@ -7,7 +7,7 @@ service cloud.firestore {
     function admin() {
       return signedIn()
         && request.auth.token.email_verified == true
-        && request.auth.token.email == 'oemartell@gmail.com';
+        && request.auth.token.email in ['oemartell@gmail.com', 'morenoheidi@gmail.com'];
     }
     function owner(uid) {
       return signedIn() && request.auth.uid == uid;
