@@ -1,13 +1,10 @@
-// Datos públicos del proyecto Firebase de El mundo de Mile.
-// Completar estos valores con la configuración Web de Firebase.
-// Estas claves identifican el proyecto; la seguridad la hacen Auth + reglas de Firestore.
+// Configuración pública del proyecto Firebase de El mundo de Mile.
 window.MILE_FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyArbYTJymEuh2lUnjG-WjyJcqIdWy5mDvk",
+  authDomain: "elmundodemi.firebaseapp.com",
+  projectId: "elmundodemi",
+  storageBucket: "elmundodemi.firebasestorage.app",
+  messagingSenderId: "493063229837",
+  appId: "1:493063229837:web:519c3f730f2bec37b16dc4"
 };
-// Cuenta autorizada para el panel de padres (debe iniciar sesión con Google).
 window.MILE_ADMIN_EMAIL = "oemartell@gmail.com";
