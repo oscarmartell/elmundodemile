@@ -23,7 +23,7 @@ import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} f
 import {getFirestore,collection,doc,getDoc,getDocs,query,orderBy,limit,onSnapshot,runTransaction,serverTimestamp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 const $=id=>document.getElementById(id),show=(id,yes)=>$(id).classList.toggle("hidden",!yes),escape=s=>String(s??"").replace(/[&<>"']/g,x=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[x]));
 const conf=window.MILE_FIREBASE_CONFIG;
-if(!conf?.apiKey||!conf?.projectId||!window.MILE_ADMIN_EMAIL){
+if(!conf?.apiKey||!conf?.projectId||!Array.isArray(window.MILE_ADMIN_EMAILS)||!window.MILE_ADMIN_EMAILS.length){
  $("setup").innerHTML="🔐 <b>Panel preparado, conexión pendiente.</b> Falta configurar Firebase y definir el acceso parental. No se habilita la administración sin autenticación.";
 }else{
  let auth,db,unsubscribe=()=>{},requests=[],taskData=[],milenaId=null;
@@ -76,7 +76,7 @@ if(!conf?.apiKey||!conf?.projectId||!window.MILE_ADMIN_EMAIL){
  }
  onAuthStateChanged(auth,async user=>{
   unsubscribe();unsubscribe=()=>{};
-  const allowed=!!user&&user.emailVerified&&user.email?.toLowerCase()===String(window.MILE_ADMIN_EMAIL).toLowerCase();
+  const allowed=!!user&&user.emailVerified&&(window.MILE_ADMIN_EMAILS||[]).includes(user.email?.toLowerCase());
   show("login",!allowed);show("private",allowed);show("logout",allowed);
   if(!user){$("loginMsg").textContent="";return}
   if(!allowed){$("loginMsg").textContent="Esta cuenta no tiene permiso para administrar.";await signOut(auth);return}
