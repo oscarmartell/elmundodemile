@@ -61,10 +61,10 @@ document.addEventListener("click",e=>{
 refresh();
 })();
 </script><script>
-/* Cocina: obligatoria lunes y miércoles; especial opcional los otros cinco días. */
+/* Cocina: especial obligatoria martes y jueves; opcional otros días. */
 (function(){
 const previousRender=render;
-const isRequired=()=>[1,3].includes(new Date().getDay());
+const isRequired=()=>[2,4].includes(new Date().getDay());
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const records=()=>{try{return JSON.parse(localStorage.getItem("mile-kitchen-days")||"{}")}catch{return {}}};
 const kitchenStatus=()=>records()[today()]||"new";
