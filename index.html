@@ -95,4 +95,38 @@ document.addEventListener("click",e=>{
 },true);
 kitchenRender();
 })();
+</script>
+<script>
+/* Guardar la ropa limpia: especial obligatoria martes y jueves; opcional otros días. */
+(function(){
+const prevRender=render;
+const required=()=>[2,4].includes(new Date().getDay());
+const dateKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const load=()=>{try{return JSON.parse(localStorage.getItem("mile-laundry-days")||"{}")}catch{return {}}};
+const getStatus=()=>load()[dateKey()]||"new";
+function laundryRender(){
+ prevRender();
+ document.querySelector('[data-opt="s1"]')?.closest(".line")?.remove();
+ const mandatory=required(),status=getStatus(),container=document.querySelector(mandatory?"#dailyList":"#specialList");
+ if(container){
+ const label=mandatory?(status==="review"?"En revisión":"¡Hecho!"):(status==="new"?"Aceptar":status==="accepted"?"¡Hecho!":"En revisión");
+ const html='<div class="line"><div><div class="name">Guardar la ropa limpia</div><div class="pts">100 puntos · '+(mandatory?"Obligatoria hoy":"Especial opcional")+'</div></div><button class="btn" data-laundry '+(status==="review"?"disabled":"")+'>'+label+'</button></div>';
+ container.insertAdjacentHTML(mandatory?"beforeend":"afterbegin",html);
+ }
+ if(mandatory){
+ const counter=document.querySelector("#count"),bar=document.querySelector("#progress");
+ const m=counter?.textContent.match(/^(\d+)\/(\d+)$/);
+ if(m){const done=Number(m[1])+(status==="review"?1:0),total=Number(m[2])+1;counter.textContent=done+"/"+total;if(bar)bar.style.width=(done/total*100)+"%"}
+ }
+}
+render=laundryRender;
+document.addEventListener("click",e=>{
+ const button=e.target.closest("[data-laundry]");
+ if(!button)return;
+ const old=getStatus();if(old==="review")return;
+ const next=required()?"review":old==="new"?"accepted":"review";
+ const data=load();data[dateKey()]=next;localStorage.setItem("mile-laundry-days",JSON.stringify(data));laundryRender();
+},true);
+laundryRender();
+})();
 </script></body></html>
