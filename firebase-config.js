@@ -7,4 +7,4 @@ window.MILE_FIREBASE_CONFIG = {
   messagingSenderId: "493063229837",
   appId: "1:493063229837:web:519c3f730f2bec37b16dc4"
 };
-window.MILE_ADMIN_EMAIL = "oemartell@gmail.com";
+window.MILE_ADMIN_EMAILS = ["oemartell@gmail.com", "morenoheidi@gmail.com"];
