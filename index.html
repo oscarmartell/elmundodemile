@@ -157,4 +157,30 @@ document.addEventListener("click",event=>{
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",paint);else paint();
 window.addEventListener("load",paint);
 })();
+</script><script>
+/* mile-theme-fix-v1: cambiar temas sin ejecutar rutinas de tareas que puedan fallar. */
+(function(){
+ const options=[["haikyuu","🏐 Haikyuu!!"],["mentalist","🔎 El Mentalista"],["aurora","💜 Aurora"],["cherry","🌸 Cherry"],["mint","🌿 Menta"],["sunset","🌅 Atardecer"]];
+ const app=document.getElementById("app");
+ const label=document.getElementById("themeLabel");
+ const paint=n=>{
+  const index=((Number(n)||0)%options.length+options.length)%options.length;
+  app.dataset.theme=options[index][0];label.textContent=options[index][1];
+  try{
+   const data=JSON.parse(localStorage.getItem("mile-demo-v1")||"{}");
+   data.theme=index;localStorage.setItem("mile-demo-v1",JSON.stringify(data));
+  }catch(e){}
+  try{if(typeof state!=="undefined")state.theme=index}catch(e){}
+ };
+ document.addEventListener("click",e=>{
+  if(!e.target.closest("#brush"))return;
+  e.preventDefault();e.stopImmediatePropagation();
+  const existing=options.findIndex(x=>x[0]===app.dataset.theme);
+  paint((existing+1)%options.length);
+ },true);
+ try{
+  const current=JSON.parse(localStorage.getItem("mile-demo-v1")||"{}").theme;
+  paint(current===undefined?options.findIndex(x=>x[0]===app.dataset.theme):current);
+ }catch(e){paint(0)}
+})();
 </script></body></html>
