@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function admin() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'oemartell@gmail.com';
+    }
+    function owner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+    match /tasks/{taskId} {
+      allow read: if signedIn();
+      allow write: if admin();
+    }
+    match /profiles/{uid} {
+      allow read: if admin() || owner(uid);
+      allow create, update, delete: if admin();
+    }
+    match /requests/{requestId} {
+      allow read: if admin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.type in ['task','reward','pause']
+        && request.resource.data.keys().hasOnly(['uid','type','status','taskId','taskName','rewardName','points','reason','startDate','endDate','createdAt'])
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if admin();
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
