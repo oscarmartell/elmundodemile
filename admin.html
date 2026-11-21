@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Panel de padres · El mundo de Mile</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext x='50%25' y='.9em' text-anchor='middle' font-size='54'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E">
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#101b29;color:#edf3fa}.wrap{max-width:980px;margin:auto;padding:24px 16px 90px}.head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}h1{font-size:clamp(24px,5vw,34px);margin:4px 0 6px}h2{font-size:17px;margin:0 0 14px}.muted{color:#a9b9c9;font-size:13px}.pill{display:inline-block;border-radius:100px;padding:5px 9px;background:#324155;color:#cbd6e4;font-size:12px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{background:#1a2b3b;border:1px solid #324354;border-radius:16px;padding:18px;margin-bottom:14px}.stat{font-size:28px;font-weight:800;margin-top:4px}.tabs{display:flex;gap:7px;overflow:auto;margin:18px 0}.tabs button{white-space:nowrap}.btn{background:#86d3bb;color:#10251f;border:0;border-radius:10px;padding:11px 14px;font-weight:750;cursor:pointer}.btn.secondary{background:#304457;color:#eef5ff}.btn.danger{background:#743f4b;color:#fff}.btn:disabled{opacity:.45;cursor:not-allowed}.tabs .active{background:#86d3bb;color:#10251f}.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid #33475b}.row:first-child{border:0}.actions{display:flex;gap:7px;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}input,select,textarea{width:100%;border-radius:9px;padding:10px;border:1px solid #496077;color:#fff;background:#0f2131;font:inherit}label{font-size:13px}.empty{color:#c3cfdd;padding:14px 0;font-size:14px}.alert{padding:15px;border:1px solid #8b7247;background:#473b29;border-radius:14px;margin-bottom:15px;line-height:1.5}.success{color:#a6f3d6}.error{color:#ffb6b6}.hidden{display:none!important}.title{font-size:14px;font-weight:700}.small{font-size:12px;color:#a9b9c9}.search{margin:0 0 12px}@media(max-width:650px){.grid{grid-template-columns:1fr 1fr}.head{align-items:start}.row{align-items:start;flex-direction:column}.row .actions{width:100%}.row .actions button{flex:1}}
+</style></head><body><main class="wrap">
+<header class="head"><div><div class="pill">ADMINISTRACIÓN FAMILIAR</div><h1>El mundo de Mile ✨</h1><div class="muted">Panel de padres · separado de la app de Milena</div></div><button class="btn secondary hidden" id="logout">Salir</button></header>
+<div class="alert" id="setup">🔐 <b>Configuración pendiente.</b> El panel está preparado para Firebase, pero no permite administrar información real hasta conectar el proyecto, activar Google Authentication y aplicar las reglas de Firestore. No uses esta pantalla como panel seguro todavía.</div>
+<div id="login" class="card hidden"><h2>Ingreso de padres</h2><p class="muted">Solo la cuenta parental autorizada podrá abrir el panel.</p><button class="btn" id="loginBtn">Entrar con Google</button><p id="loginMsg" class="small"></p></div>
+<div id="private" class="hidden">
+<div class="grid"><div class="card"><div class="muted">Solicitudes pendientes</div><div class="stat" id="pendingCount">0</div></div><div class="card"><div class="muted">Puntos disponibles</div><div class="stat" id="balance">0</div></div><div class="card"><div class="muted">Tareas configuradas</div><div class="stat" id="taskCount">0</div></div></div>
+<div class="tabs"><button class="btn active" data-tab="requests">Solicitudes</button><button class="btn secondary" data-tab="tasks">Tareas</button><button class="btn secondary" data-tab="points">Puntos</button><button class="btn secondary" data-tab="settings">Ajustes</button></div>
+<section id="requests" class="card"><h2>Solicitudes de Milena</h2><p class="muted">Aprobá o rechazá tareas, canjes y pausas. Los puntos se acreditan únicamente al aprobar una tarea.</p><div id="requestList" class="empty">Cargando solicitudes…</div></section>
+<section id="tasks" class="card hidden"><h2>Catálogo de tareas</h2><p class="muted">Configuración centralizada de las tareas. Los cambios se sincronizarán con Milena una vez conectada su app.</p><input id="taskSearch" class="search" placeholder="Buscar una tarea"><div id="taskList" class="empty">Todavía no hay tareas sincronizadas con Firebase.</div><div class="small">Diaria: todos los días · Especial: días definidos · Súper especial: opcional.</div></section>
+<section id="points" class="card hidden"><h2>Administración de puntos</h2><p class="muted">Los movimientos deben quedar registrados. La acreditación de tareas se hace desde Solicitudes.</p><div id="pointInfo" class="empty">Sin perfil de Milena vinculado todavía.</div></section>
+<section id="settings" class="card hidden"><h2>Ajustes y seguridad</h2><div class="row"><span>Cuenta parental autorizada</span><b id="adminEmail"></b></div><div class="row"><span>Estado de Firebase</span><b class="success">Conectado</b></div><div class="row"><span>Modo de puntuación</span><span class="small">1 punto = $2 (referencia privada para padres)</span></div><div class="row"><span>Tope mensual de tareas obligatorias</span><span class="small">$50.000 equivalentes</span></div><p class="small">La lógica automática de topes, sanciones y conversión por fecha requiere la siguiente etapa.</p></section>
+</div><p class="small">Acceso público al archivo, pero información protegida mediante Firebase Authentication y reglas de Firestore una vez configuradas. No se muestran datos reales sin autenticación.</p>
+</main>
+<script src="./firebase-config.js"></script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import {getFirestore,collection,doc,getDoc,getDocs,query,orderBy,limit,onSnapshot,runTransaction,serverTimestamp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+const $=id=>document.getElementById(id),show=(id,yes)=>$(id).classList.toggle("hidden",!yes),escape=s=>String(s??"").replace(/[&<>"']/g,x=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[x]));
+const conf=window.MILE_FIREBASE_CONFIG;
+if(!conf?.apiKey||!conf?.projectId||!window.MILE_ADMIN_EMAIL){
+ $("setup").innerHTML="🔐 <b>Panel preparado, conexión pendiente.</b> Falta configurar Firebase y definir el acceso parental. No se habilita la administración sin autenticación.";
+}else{
+ let auth,db,unsubscribe=()=>{},requests=[],taskData=[],milenaId=null;
+ try{
+ const app=initializeApp(conf),provider=new GoogleAuthProvider();auth=getAuth(app);db=getFirestore(app);
+ $("setup").classList.add("hidden");
+ show("login",true);
+ $("loginBtn").onclick=async()=>{try{await signInWithPopup(auth,provider)}catch(e){$("loginMsg").textContent="No se pudo ingresar: "+e.message}};
+ $("logout").onclick=()=>signOut(auth);
+ document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-tab]").forEach(x=>x.className="btn secondary");b.className="btn active";["requests","tasks","points","settings"].forEach(x=>show(x,x===b.dataset.tab))});
+ $("taskSearch").oninput=()=>drawTasks();
+ function drawTasks(){const q=$("taskSearch").value.toLowerCase();const arr=taskData.filter(t=>t.name?.toLowerCase().includes(q));$("taskCount").textContent=taskData.length;$("taskList").innerHTML=arr.length?arr.map(t=>'<div class="row"><div><div class="title">'+escape(t.name)+'</div><div class="small">'+escape(t.category||t.mode||"Sin categoría")+' · '+escape(t.points||0)+' puntos</div></div><div class="small">'+escape((t.days||[]).join(", "))+'</div></div>').join(""):'<div class="empty">No hay tareas disponibles todavía.</div>'}
+ function drawRequests(){
+  const pending=requests.filter(r=>r.status==="pending");
+  $("pendingCount").textContent=pending.length;
+  $("requestList").innerHTML=pending.length?pending.map(r=>'<div class="row"><div><div class="title">'+escape(r.taskName||r.rewardName||r.type||"Solicitud")+'</div><div class="small">'+escape(r.type||"tarea")+' · '+escape(r.createdAt?.toDate?.()?.toLocaleString("es-AR")||"Sin fecha")+'</div></div><div class="actions"><button class="btn" data-approve="'+escape(r.id)+'">Aprobar</button><button class="btn danger" data-reject="'+escape(r.id)+'">Rechazar</button></div></div>').join(""):'<div class="empty">No hay solicitudes pendientes.</div>';
+  document.querySelectorAll("[data-approve],[data-reject]").forEach(button=>button.onclick=async()=>{
+   const id=button.dataset.approve||button.dataset.reject,approved=!!button.dataset.approve;
+   button.disabled=true;
+   try{
+    await runTransaction(db,async tx=>{
+     const ref=doc(db,"requests",id),snap=await tx.get(ref);
+     if(!snap.exists()||snap.data().status!=="pending")throw Error("Esta solicitud ya fue procesada.");
+     const r=snap.data();
+     let userRef=null,userSnap=null;
+     if(approved&&(r.type==="task"||r.type==="reward")){
+      if(!r.uid)throw Error("Solicitud sin usuario");
+      userRef=doc(db,"profiles",r.uid);userSnap=await tx.get(userRef);
+      if(!userSnap.exists())throw Error("Perfil de Milena no vinculado");
+     }
+     if(userRef){
+      const balance=Number(userSnap.data().balance||0);
+      if(r.type==="task"){
+       const taskRef=doc(db,"tasks",String(r.taskId||""));
+       const taskSnap=await tx.get(taskRef);
+       if(!taskSnap.exists())throw Error("Tarea no encontrada en el catálogo");
+       const points=Number(taskSnap.data().points||0);
+       if(!Number.isInteger(points)||points<0)throw Error("Puntos de tarea inválidos");
+       tx.update(userRef,{balance:balance+points});
+      }else if(r.type==="reward"){
+       const points=Number(r.points||0);
+       if(!Number.isInteger(points)||points<=0||balance<points)throw Error("Puntos insuficientes");
+       tx.update(userRef,{balance:balance-points});
+      }
+     }
+     tx.update(ref,{status:approved?"approved":"rejected",reviewedAt:serverTimestamp(),reviewedBy:auth.currentUser.uid});
+    });
+   }catch(e){alert("No se pudo procesar: "+e.message)}
+  });
+ }
+ onAuthStateChanged(auth,async user=>{
+  unsubscribe();unsubscribe=()=>{};
+  const allowed=!!user&&user.emailVerified&&user.email?.toLowerCase()===String(window.MILE_ADMIN_EMAIL).toLowerCase();
+  show("login",!allowed);show("private",allowed);show("logout",allowed);
+  if(!user){$("loginMsg").textContent="";return}
+  if(!allowed){$("loginMsg").textContent="Esta cuenta no tiene permiso para administrar.";await signOut(auth);return}
+  $("adminEmail").textContent=user.email;
+  try{
+   const un1=onSnapshot(query(collection(db,"requests"),orderBy("createdAt","desc"),limit(150)),snap=>{requests=snap.docs.map(d=>({id:d.id,...d.data()}));drawRequests()},err=>{$("requestList").textContent="No se pudieron leer solicitudes: "+err.message});
+   const un2=onSnapshot(collection(db,"tasks"),snap=>{taskData=snap.docs.map(d=>({id:d.id,...d.data()}));drawTasks()},err=>{$("taskList").textContent="Error de tareas: "+err.message});
+   const un3=onSnapshot(collection(db,"profiles"),snap=>{const profiles=snap.docs.map(x=>({id:x.id,...x.data()}));const milena=profiles.find(x=>x.role==="milena");milenaId=milena?.id||null;$("balance").textContent=(Number(milena?.balance||0)).toLocaleString("es-AR");$("pointInfo").textContent=milena?"Puntos disponibles de Milena: "+Number(milena.balance||0).toLocaleString("es-AR"):"Todavía no se vinculó el perfil de Milena."},err=>{$("pointInfo").textContent="Error de perfiles: "+err.message});
+   unsubscribe=()=>{un1();un2();un3()};
+  }catch(e){$("requestList").textContent=e.message}
+ });
+ }catch(e){show("login",false);$("setup").classList.remove("hidden");$("setup").textContent="Error al iniciar Firebase: "+e.message}
+}
+</script></body></html>
