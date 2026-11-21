@@ -16,7 +16,7 @@
 <section id="settings" class="card hidden"><h2>Ajustes y seguridad</h2><div class="row"><span>Cuenta parental autorizada</span><b id="adminEmail"></b></div><div class="row"><span>Estado de Firebase</span><b class="success">Conectado</b></div><div class="row"><span>Modo de puntuación</span><span class="small">1 punto = $2 (referencia privada para padres)</span></div><div class="row"><span>Tope mensual de tareas obligatorias</span><span class="small">$50.000 equivalentes</span></div><p class="small">La lógica automática de topes, sanciones y conversión por fecha requiere la siguiente etapa.</p></section>
 </div><p class="small">Acceso público al archivo, pero información protegida mediante Firebase Authentication y reglas de Firestore una vez configuradas. No se muestran datos reales sin autenticación.</p>
 </main>
-<script src="./firebase-config.js"></script>
+<script src="./firebase-config.js?v=20261121-admin2"></script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
@@ -76,10 +76,10 @@ if(!conf?.apiKey||!conf?.projectId||!Array.isArray(window.MILE_ADMIN_EMAILS)||!w
  }
  onAuthStateChanged(auth,async user=>{
   unsubscribe();unsubscribe=()=>{};
-  const allowed=!!user&&user.emailVerified&&(window.MILE_ADMIN_EMAILS||[]).includes(user.email?.toLowerCase());
+  const allowed=!!user&&user.emailVerified&&(window.MILE_ADMIN_EMAILS||[]).includes(user.email?.trim().toLowerCase());
   show("login",!allowed);show("private",allowed);show("logout",allowed);
   if(!user){$("loginMsg").textContent="";return}
-  if(!allowed){$("loginMsg").textContent="Esta cuenta no tiene permiso para administrar.";await signOut(auth);return}
+  if(!allowed){const account=user.email||"Cuenta sin correo";await signOut(auth);$("loginMsg").textContent="No se autorizó el ingreso con "+account+". Ingresá con oemartell@gmail.com o morenoheidi@gmail.com y comprobá que el correo esté verificado.";return}
   $("adminEmail").textContent=user.email;
   try{
    const un1=onSnapshot(query(collection(db,"requests"),orderBy("createdAt","desc"),limit(150)),snap=>{requests=snap.docs.map(d=>({id:d.id,...d.data()}));drawRequests()},err=>{$("requestList").textContent="No se pudieron leer solicitudes: "+err.message});
