@@ -25,108 +25,58 @@ const set=()=>{const t=document.querySelector("#app").dataset.theme;const svg=t=
 new MutationObserver(set).observe(document.querySelector("#app"),{attributes:true,attributeFilter:["data-theme"]});set();
 })();
 </script><script>
-/* Lavar los platos: lunes y miércoles obligatoria; otros días especial automática */
+/* Motor único de clasificación y días obligatorios; conserva el catálogo y los puntos originales. */
 (function(){
-const originalRender=render;
-const weekday=()=>new Date().getDay();
-const mandatory=()=>[1,3].includes(weekday());
-const taskIndex=2;
-const dayKey=()=>new Date().toLocaleDateString("sv-SE");
-const completedToday=()=>{try{return JSON.parse(localStorage.getItem("mile-dishes-days")||"{}")}catch{return {}}};
-const writeDay=()=>{const s=completedToday();s[dayKey()]=true;localStorage.setItem("mile-dishes-days",JSON.stringify(s))};
-function refresh(){
- originalRender();
- const row=document.querySelector('[data-done="2"]')?.closest(".line");
- const isMandatory=mandatory();
- if(!isMandatory){
-  if(row)row.remove();
-  const p=document.querySelector("#specialList");
-  if(p){
-   const done=!!completedToday()[dayKey()];
-   p.insertAdjacentHTML("afterbegin",'<div class="line"><div><div class="name">Lavar los platos 🍽️</div><div class="pts">160 puntos · Especial de hoy</div></div><button class="btn" data-dish-special '+(done?'disabled':'')+'>'+(done?'En revisión':'¡Hecho!')+'</button></div>');
-  }
- }
- const counter=document.querySelector("#count");
- const bar=document.querySelector("#progress");
- const doneDaily=state.done.filter(i=>isMandatory||i!==taskIndex).length;
- const total=isMandatory?6:5;
- if(counter)counter.textContent=doneDaily+"/"+total;
- if(bar)bar.style.width=doneDaily/total*100+"%";
-}
-render=refresh;
-document.addEventListener("click",e=>{
- const b=e.target.closest("[data-dish-special]");
- if(b&&!completedToday()[dayKey()]){writeDay();refresh()}
-},true);
-refresh();
-})();
-</script><script>
-/* Cocina: especial obligatoria martes y jueves; opcional otros días. */
-(function(){
+const rules=[["Hacer la cama","daily",[]],["Mantener su habitación ordenada","daily",[]],["Limpiar y ordenar la cocina","special",[2,4]],["Aprobar un examen importante","super",[]],["Guardar la ropa limpia","special",[2,4]],["Limpiar el baño completo","super",[]],["Lavar los platos","special",[1,3,5]],["Preparar mochila y materiales","daily",[]],["Llevar la ropa sucia al canasto","daily",[]],["Poner y levantar la mesa","daily",[]],["Limpiar y barrer su habitación","special",[3,6]],["Cambiar las sábanas","special",[6]],["Ordenar escritorio, placard y cajones","special",[6]],["Barrer espacios comunes","super",[]],["Pasar el trapo o limpiar pisos","super",[]],["Sacar la basura","special",[1,3,5]],["Ordenar espacios comunes","super",[]],["Limpiar vidrios, ventanas y espejos","super",[]],["Limpiar y organizar la heladera","super",[]],["Limpiar horno o microondas","super",[]],["Guardar y organizar las compras","super",[]],["Pasar la aspiradora","super",[]],["Barrer","special",[2,4]],["Ordenar y limpiar un ambiente completo de la casa","super",[]],["Realizar una limpieza profunda de su habitación","super",[]],["Preparar una merienda especial para sus hermanos","super",[]]];
+const source=new Map();
+daily.forEach((task,i)=>source.set(task[0],{name:task[0],points:task[1],origin:"daily",index:i}));
+special.forEach((task,i)=>source.set(task[0],{name:task[0],points:task[1],origin:"special",index:i}));
+superTasks.forEach((task,i)=>source.set(task[0],{name:task[0],points:task[1],origin:"super",index:i}));
+const tasks=rules.map(([name,mode,days])=>{const origin=source.get(name);if(!origin)throw Error("Tarea inexistente: "+name);return {...origin,mode,days}});
 const previousRender=render;
-const isRequired=()=>[2,4].includes(new Date().getDay());
-const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
-const records=()=>{try{return JSON.parse(localStorage.getItem("mile-kitchen-days")||"{}")}catch{return {}}};
-const kitchenStatus=()=>records()[today()]||"new";
-function kitchenRender(){
+const weekday=()=>new Date().getDay();
+const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")};
+const key="mile-scheduled-tasks-v1";
+const read=()=>{try{return JSON.parse(localStorage.getItem(key)||"{}")}catch{return {}}};
+const statusFor=task=>{const d=read();const id=task.origin+":"+task.index;return task.mode==="super"?(d.super?.[id]||"new"):(d.days.length===0||task.mode==="daily"||task.days.includes(weekday()))?(d.daily?.[today()]?.[id]||"new"):(d.optional?.[today()]?.[id]||"new")};
+function updateStatus(task,next){
+ const d=read(),id=task.origin+":"+task.index;
+ const group=task.mode==="super"?"super":task.mode==="daily"||task.days.includes(weekday())?"daily":"optional";
+ if(group==="super"){d.super=d.super||{};d.super[id]=next}
+ else{d[group]=d[group]||{};d[group][today()]=d[group][today()]||{};d[group][today()][id]=next}
+ localStorage.setItem(key,JSON.stringify(d));
+}
+function scheduledRender(){
  previousRender();
- // The kitchen remains at its original catalog index (s0) to preserve all other saved task IDs.
- document.querySelector('[data-opt="s0"]')?.closest(".line")?.remove();
- const mandatory=isRequired(),status=kitchenStatus(),container=document.querySelector(mandatory?"#dailyList":"#specialList");
- if(container){
- const label=mandatory?(status==="review"?"En revisión":"¡Hecho!"):(status==="new"?"Aceptar":status==="accepted"?"¡Hecho!":"En revisión");
- const row='<div class="line"><div><div class="name">Limpiar y ordenar la cocina</div><div class="pts">100 puntos · '+(mandatory?"Obligatoria hoy":"Especial opcional")+'</div></div><button class="btn" data-kitchen '+(status==="review"?"disabled":"")+'>'+label+'</button></div>';
- container.insertAdjacentHTML(mandatory?"beforeend":"afterbegin",row);
+ tasks.forEach(t=>{
+  const attr=t.origin==="daily"?"data-done":t.origin==="special"?"data-opt":"data-opt";
+  const id=t.origin==="daily"?String(t.index):(t.origin==="special"?"s":"u")+t.index;
+  document.querySelectorAll('['+attr+'="'+id+'"]').forEach(button=>button.closest(".line")?.remove());
+ });
+ for(const t of tasks){
+  const mandatory=t.mode==="daily"||(t.mode==="special"&&t.days.includes(weekday()));
+  const section=mandatory?"#dailyList":t.mode==="super"?"#superList":"#specialList";
+  const status=statusFor(t);
+  const label=status==="review"?"En revisión":mandatory?"¡Hecho!":status==="accepted"?"¡Hecho!":"Aceptar";
+  const button='<button class="btn" data-scheduled="'+tasks.indexOf(t)+'" '+(status==="review"?"disabled":"")+'>'+label+'</button>';
+  const detail=t.points+' puntos'+(t.mode==="special"?' · '+(mandatory?"Obligatoria hoy":"Opcional hoy"):'');
+  const row='<div class="line"><div><div class="name">'+t.name+'</div><div class="pts">'+detail+'</div></div>'+button+'</div>';
+  document.querySelector(section).insertAdjacentHTML("beforeend",row);
  }
- if(mandatory){
- const counter=document.querySelector("#count"),bar=document.querySelector("#progress");
- const matches=counter?.textContent.match(/^(\d+)\/(\d+)$/);
- if(matches){const done=Number(matches[1])+(status==="review"?1:0),total=Number(matches[2])+1;counter.textContent=done+"/"+total;if(bar)bar.style.width=(100*done/total)+"%"}
- }
+ const dailyTasks=tasks.filter(t=>t.mode==="daily"||(t.mode==="special"&&t.days.includes(weekday())));
+ const done=dailyTasks.filter(t=>statusFor(t)==="review").length;
+ document.querySelector("#count").textContent=done+"/"+dailyTasks.length;
+ document.querySelector("#progress").style.width=(dailyTasks.length?100*done/dailyTasks.length:0)+"%";
 }
-render=kitchenRender;
+render=scheduledRender;
 document.addEventListener("click",e=>{
- const button=e.target.closest("[data-kitchen]");
- if(!button)return;
- const status=kitchenStatus(),required=isRequired();
- if(status==="review")return;
- const next=required?"review":status==="new"?"accepted":"review";
- const data=records();data[today()]=next;localStorage.setItem("mile-kitchen-days",JSON.stringify(data));kitchenRender();
-},true);
-kitchenRender();
-})();
-</script>
-<script>
-/* Guardar la ropa limpia: especial obligatoria martes y jueves; opcional otros días. */
-(function(){
-const prevRender=render;
-const required=()=>[2,4].includes(new Date().getDay());
-const dateKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
-const load=()=>{try{return JSON.parse(localStorage.getItem("mile-laundry-days")||"{}")}catch{return {}}};
-const getStatus=()=>load()[dateKey()]||"new";
-function laundryRender(){
- prevRender();
- document.querySelector('[data-opt="s1"]')?.closest(".line")?.remove();
- const mandatory=required(),status=getStatus(),container=document.querySelector(mandatory?"#dailyList":"#specialList");
- if(container){
- const label=mandatory?(status==="review"?"En revisión":"¡Hecho!"):(status==="new"?"Aceptar":status==="accepted"?"¡Hecho!":"En revisión");
- const html='<div class="line"><div><div class="name">Guardar la ropa limpia</div><div class="pts">100 puntos · '+(mandatory?"Obligatoria hoy":"Especial opcional")+'</div></div><button class="btn" data-laundry '+(status==="review"?"disabled":"")+'>'+label+'</button></div>';
- container.insertAdjacentHTML(mandatory?"beforeend":"afterbegin",html);
- }
- if(mandatory){
- const counter=document.querySelector("#count"),bar=document.querySelector("#progress");
- const m=counter?.textContent.match(/^(\d+)\/(\d+)$/);
- if(m){const done=Number(m[1])+(status==="review"?1:0),total=Number(m[2])+1;counter.textContent=done+"/"+total;if(bar)bar.style.width=(done/total*100)+"%"}
- }
-}
-render=laundryRender;
-document.addEventListener("click",e=>{
- const button=e.target.closest("[data-laundry]");
- if(!button)return;
- const old=getStatus();if(old==="review")return;
- const next=required()?"review":old==="new"?"accepted":"review";
- const data=load();data[dateKey()]=next;localStorage.setItem("mile-laundry-days",JSON.stringify(data));laundryRender();
-},true);
-laundryRender();
+ const button=e.target.closest("[data-scheduled]");if(!button)return;
+ const t=tasks[Number(button.dataset.scheduled)];if(!t)return;
+ const status=statusFor(t);if(status==="review")return;
+ const mandatory=t.mode==="daily"||(t.mode==="special"&&t.days.includes(weekday()));
+ updateStatus(t,mandatory||status==="accepted"?"review":"accepted");
+ scheduledRender();
+});
+scheduledRender();
 })();
 </script></body></html>
